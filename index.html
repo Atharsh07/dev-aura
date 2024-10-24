@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPA Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+            margin-bottom: 20px;
+        }
+
+        .selection-container {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        select, button {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        button {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #1557b0;
+        }
+
+        .calculator-container {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .gpa-section, .cgpa-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .course-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+            padding: 8px;
+            background-color: white;
+            border-radius: 4px;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .cgpa-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .label {
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #444;
+        }
+
+        .credits {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            color: #1a73e8;
+        }
+
+        #semesterSelect {
+            margin-bottom: 15px;
+        }
+
+        .course-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GPA Calculator</h1>
+
+        <div class="selection-container">
+            <select id="regulation">
+                <option value="">Select Regulation</option>
+                <option value="r2019">Regulation 2019</option>
+                <option value="r2021">Regulation 2021</option>
+            </select>
+
+            <select id="program">
+                <option value="">Select Program</option>
+                <option value="ug">Undergraduate</option>
+                <option value="pg">Postgraduate</option>
+            </select>
+
+            <select id="department">
+                <option value="">Select Department</option>
+                <option value="cse">Computer Science</option>
+                <option value="ece">Electronics</option>
+                <option value="mech">Mechanical</option>
+            </select>
+
+            <button onclick="showCalculator()">Submit</button>
+        </div>
+
+        <div class="calculator-container" id="calculatorContainer">
+            <div class="gpa-section">
+                <h2>GPA Calculator</h2>
+                <select id="semesterSelect" onchange="populateCourses()">
+                    <option value="">Select Semester</option>
+                    <option value="sem1">Semester 1</option>
+                    <option value="sem2">Semester 2</option>
+                    <option value="sem3">Semester 3</option>
+                    <option value="sem4">Semester 4</option>
+                    <option value="sem5">Semester 5</option>
+                    <option value="sem6">Semester 6</option>
+                    <option value="sem7">Semester 7</option>
+                    <option value="sem8">Semester 8</option>
+                </select>
+                <div class="course-header">
+                    <div>Course Name</div>
+                    <div>Credits</div>
+                    <div>Grade</div>
+                </div>
+                <div id="courseList"></div>
+                <button onclick="calculateGPA()">Calculate GPA</button>
+                <div class="result" id="gpaResult"></div>
+            </div>
+
+            <div class="cgpa-section">
+                <h2>CGPA Calculator</h2>
+                <div class="cgpa-inputs">
+                    <div>
+                        <div class="label">From Semester</div>
+                        <input type="number" id="startSem" min="1" max="8" value="1">
+                    </div>
+                    <div>
+                        <div class="label">To Semester</div>
+                        <input type="number" id="endSem" min="1" max="8" value="1">
+                    </div>
+                </div>
+                <button onclick="calculateCGPA()">Calculate CGPA</button>
+                <div class="result" id="cgpaResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample dataset with all semesters
+        const courseData = {
+            r2019: {
+                ug: {
+                    cse: {
+                        sem1: [
+                            { code: 'CS101', name: 'Programming Fundamentals', credits: 4 },
+                            { code: 'CS102', name: 'Digital Logic', credits: 3 },
+                            { code: 'MA101', name: 'Mathematics I', credits: 4 },
+                            { code: 'PH101', name: 'Physics', credits: 3 },
+                            { code: 'EN101', name: 'English', credits: 2 }
+                        ],
+                        sem2: [
+                            { code: 'CS201', name: 'Data Structures', credits: 4 },
+                            { code: 'CS202', name: 'Computer Architecture', credits: 3 },
+                            { code: 'MA201', name: 'Mathematics II', credits: 4 },
+                            { code: 'CH201', name: 'Chemistry', credits: 3 },
+                            { code: 'EN201', name: 'Technical Writing', credits: 2 }
+                        ],
+                        sem3: [
+                            { code: 'CS301', name: 'Database Systems', credits: 4 },
+                            { code: 'CS302', name: 'Operating Systems', credits: 4 },
+                            { code: 'CS303', name: 'Computer Networks', credits: 3 },
+                            { code: 'MA301', name: 'Probability', credits: 3 }
+                        ],
+                        sem4: [
+                            { code: 'CS401', name: 'Software Engineering', credits: 4 },
+                            { code: 'CS402', name: 'Web Technologies', credits: 3 },
+                            { code: 'CS403', name: 'Algorithms', credits: 4 },
+                            { code: 'CS404', name: 'AI Basics', credits: 3 }
+                        ],
+                        sem5: [
+                            { code: 'CS501', name: 'Machine Learning', credits: 4 },
+                            { code: 'CS502', name: 'Cloud Computing', credits: 3 },
+                            { code: 'CS503', name: 'Cybersecurity', credits: 4 },
+                            { code: 'CS504', name: 'Mobile Development', credits: 3 }
+                        ],
+                        sem6: [
+                            { code: 'CS601', name: 'Big Data Analytics', credits: 4 },
+                            { code: 'CS602', name: 'IoT Systems', credits: 3 },
+                            { code: 'CS603', name: 'Distributed Systems', credits: 4 },
+                            { code: 'CS604', name: 'DevOps', credits: 3 }
+                        ],
+                        sem7: [
+                            { code: 'CS701', name: 'Deep Learning', credits: 4 },
+                            { code: 'CS702', name: 'Blockchain', credits: 3 },
+                            { code: 'CS703', name: 'Project I', credits: 4 },
+                            { code: 'CS704', name: 'Elective I', credits: 3 }
+                        ],
+                        sem8: [
+                            { code: 'CS801', name: 'Natural Language Processing', credits: 4 },
+                            { code: 'CS802', name: 'Project II', credits: 6 },
+                            { code: 'CS803', name: 'Elective II', credits: 3 },
+                            { code: 'CS804', name: 'Seminar', credits: 1 }
+                        ]
+                    }
+                }
+            }
+        };
+
+        // Grade points mapping
+        const gradePoints = {
+            'O': 10,
+            'A+': 9,
+            'A': 8,
+            'B+': 7,
+            'B': 6,
+            'C': 5,
+            'F': 0
+        };
+
+        // Sample CGPA data
+        const sampleSemesterGPAs = {
+            1: 8.5,
+            2: 8.7,
+            3: 9.0,
+            4: 8.8,
+            5: 9.2,
+            6: 8.9,
+            7: 9.1,
+            8: 9.3
+        };
+
+        function showCalculator() {
+            const regulation = document.getElementById('regulation').value;
+            const program = document.getElementById('program').value;
+            const department = document.getElementById('department').value;
+
+            if (regulation && program && department) {
+                document.getElementById('calculatorContainer').style.display = 'grid';
+                document.getElementById('semesterSelect').value = '';
+                document.getElementById('courseList').innerHTML = '';
+                document.getElementById('gpaResult').textContent = '';
+            } else {
+                alert('Please select all fields');
+            }
+        }
+
+        function populateCourses() {
+            const regulation = document.getElementById('regulation').value;
+            const program = document.getElementById('program').value;
+            const department = document.getElementById('department').value;
+            const semester = document.getElementById('semesterSelect').value;
+
+            if (!semester) {
+                document.getElementById('courseList').innerHTML = '';
+                return;
+            }
+
+            const courses = courseData[regulation][program][department][semester];
+            const courseList = document.getElementById('courseList');
+            courseList.innerHTML = '';
+
+            courses.forEach(course => {
+                const courseRow = document.createElement('div');
+                courseRow.className = 'course-row';
+                courseRow.innerHTML = `
+                    <div>${course.name}</div>
+                    <div class="credits">${course.credits}</div>
+                    <select id="${course.code}" class="grade-select">
+                        <option value="">Grade</option>
+                        ${Object.keys(gradePoints).map(grade =>
+                            `<option value="${grade}">${grade}</option>`
+                        ).join('')}
+                    </select>
+                `;
+                courseList.appendChild(courseRow);
+            });
+        }
+
+        function calculateGPA() {
+            const regulation = document.getElementById('regulation').value;
+            const program = document.getElementById('program').value;
+            const department = document.getElementById('department').value;
+            const semester = document.getElementById('semesterSelect').value;
+
+            if (!semester) {
+                alert('Please select a semester');
+                return;
+            }
+
+            const courses = courseData[regulation][program][department][semester];
+            let totalCredits = 0;
+            let totalGradePoints = 0;
+            let allGradesEntered = true;
+
+            courses.forEach(course => {
+                const gradeSelect = document.getElementById(course.code);
+                const grade = gradeSelect.value;
+
+                if (!grade) {
+                    allGradesEntered = false;
+                    return;
+                }
+
+                totalCredits += course.credits;
+                totalGradePoints += course.credits * gradePoints[grade];
+            });
+
+            if (!allGradesEntered) {
+                alert('Please enter all grades');
+                return;
+            }
+
+            const gpa = totalGradePoints / totalCredits;
+            document.getElementById('gpaResult').textContent = `GPA: ${gpa.toFixed(2)}`;
+        }
+
+        function calculateCGPA() {
+            const startSem = parseInt(document.getElementById('startSem').value);
+            const endSem = parseInt(document.getElementById('endSem').value);
+
+            if (startSem > endSem) {
+                alert('Start semester cannot be greater than end semester');
+                return;
+            }
+
+            let totalGPA = 0;
+            let semesterCount = 0;
+
+            for (let sem = startSem; sem <= endSem; sem++) {
+                if (sampleSemesterGPAs[sem]) {
+                    totalGPA += sampleSemesterGPAs[sem];
+                    semesterCount++;
+                }
+            }
+
+            const cgpa = totalGPA / semesterCount;
+            document.getElementById('cgpaResult').textContent = `CGPA: ${cgpa.toFixed(2)}`;
+        }
+    </script>
+</body>
+</html>
